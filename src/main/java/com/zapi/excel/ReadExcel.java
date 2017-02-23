@@ -2,6 +2,7 @@ package com.zapi.excel;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import org.apache.poi.ss.usermodel.Row;
@@ -17,12 +18,12 @@ public class ReadExcel {
 
 	public static ArrayList<ArrayList<ExcelPojo>> getExcelPojo(String path) {
 
-		
 		ArrayList<ArrayList<ExcelPojo>> allSheetLists = new ArrayList<ArrayList<ExcelPojo>>();
-		
+
 		File file = new File(path);
+		FileInputStream fis = null;
 		try {
-			FileInputStream fis = new FileInputStream(file);
+			fis = new FileInputStream(file);
 			workbook = new XSSFWorkbook(fis);
 		} catch (Exception e) {
 		}
@@ -36,13 +37,10 @@ public class ReadExcel {
 				if (row.getRowNum() == 0)
 					continue;
 				singleSheetList.add(ExcelPojo.buildExcelPojo(row));
-				
-			}
-			//System.out.println("No. of records are "+singleSheetList.size());
-			allSheetLists.add(singleSheetList);
-			//singleSheetList.clear();
-		}
 
+			}
+			allSheetLists.add(singleSheetList);
+		}
 		return allSheetLists;
 
 	}

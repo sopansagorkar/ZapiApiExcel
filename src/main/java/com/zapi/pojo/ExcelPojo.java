@@ -4,17 +4,16 @@ import org.apache.poi.ss.usermodel.Row;
 
 public class ExcelPojo {
 
-	String issueKey;
-	String testCaseName;
-	String cycleName;
-	String version;
-	String result;
+	public String issueKey;
+	public String cycleName;
+	public String version;
+	public String result;
 
 	public String getResult() {
 		return result;
 	}
 
-	public void setResult(String result) {
+	private void setResult(String result) {
 		this.result = result;
 	}
 
@@ -22,23 +21,15 @@ public class ExcelPojo {
 		return issueKey;
 	}
 
-	public void setIssueKey(String issueKey) {
+	private void setIssueKey(String issueKey) {
 		this.issueKey = issueKey;
-	}
-
-	public String getTestCaseName() {
-		return testCaseName;
-	}
-
-	public void setTestCaseName(String testCaseName) {
-		this.testCaseName = testCaseName;
 	}
 
 	public String getCycleName() {
 		return cycleName;
 	}
 
-	public void setCycleName(String cycleName) {
+	private void setCycleName(String cycleName) {
 		this.cycleName = cycleName;
 	}
 
@@ -46,19 +37,17 @@ public class ExcelPojo {
 		return version;
 	}
 
-	public void setVersion(String version) {
+	private void setVersion(String version) {
 		this.version = version;
 	}
 
 	public static ExcelPojo buildExcelPojo(Row row) {
 		ExcelPojo ep = new ExcelPojo();
-		ep.setIssueKey(row.getCell(0).toString().trim());
-		ep.setCycleName(row.getCell(1).toString().trim());
-		ep.setVersion(row.getCell(2).toString().trim());
-		ep.setResult(row.getCell(3).toString().trim());
+		ep.setIssueKey(row.getCell(0).getStringCellValue().toString().trim());
+		ep.setCycleName(row.getCell(1).getStringCellValue().toString().trim());
+		ep.setVersion(row.getCell(2).getStringCellValue().toString().trim());
+		ep.setResult(row.getCell(3).getStringCellValue().toString().trim());
 		return ep;
 	}
-	
-	
 
 }
