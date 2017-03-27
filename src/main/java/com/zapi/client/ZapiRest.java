@@ -12,6 +12,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import com.zapi.config.PropertyReader;
 import com.zapi.excel.ReadExcel;
 import com.zapi.pojo.CyclePojo;
 import com.zapi.pojo.ExcelPojo;
@@ -26,31 +27,62 @@ public class ZapiRest {
 	static String projectId;
 	static ArrayList<ArrayList<ExcelPojo>> allSheetList;
 
-	static {
-		allSheetList = ReadExcel.getExcelPojo("src/main/resources/inputData.xlsx");
-	}
-
 	public static void main(String[] args) {
-
+		PropertyReader.propReader();
+		allSheetList = ReadExcel.getExcelPojo(PropertyReader.excelPath);
 		for (int i = 0; i < allSheetList.size(); i++) {
-			JSONObject jsonData = getVersionIdByName(allSheetList.get(i).get(i));
+			JSONObject jsonData = getVersionIdByName(allSheetList.get(i).get(1));
 			CyclePojo cyclePojo = new CyclePojo();
 			cyclePojo.setVersionID(jsonData.get("id").toString());
 			cyclePojo.setProjectId(jsonData.get("projectId").toString());
 			String cloneCycleID = getCycleDetails(cyclePojo, allSheetList.get(i).get(i));
 			cyclePojo.setCloneCycleID(cloneCycleID);
 			String cName = createCycle(cyclePojo, allSheetList.get(i).get(i));
-			for (int j = 0; j < allSheetList.get(i).size(); j++) {
 
-				getExecutionId(allSheetList.get(i).get(j), cName, cyclePojo);
+			for (int j = 0; j < allSheetList.get(i).get(i).getRowCount(); j++) {
+				String executionId = getExecutionId(allSheetList.get(i).get(j), cName);
+				executeTest(allSheetList.get(i).get(j), executionId);
+
 			}
 		}
 
 	}
 
+	private static void executeTest(ExcelPojo excelPojo, String executionId) {
+		String status = excelPojo.getResult();
+		int statusId = 0;
+		switch (status) {
+		case "Pass":
+			statusId = 1;
+			break;
+		case "Fail":
+			statusId = 2;
+			break;
+		case "WIP":
+			statusId = 3;
+			break;
+		case "BLOCKED":
+			statusId = 4;
+			break;
+		case "UNEXECUTED":
+			statusId = 5;
+			break;
+		default:
+			break;
+		}
+		Entity payload = Entity.json("{  \"status\":\"" + statusId + "\"}");
+		Client client = ClientBuilder.newClient();
+		Response response = client.target(PropertyReader.url + "rest/zapi/latest/execution/" + executionId + "/execute")
+				.request(MediaType.APPLICATION_JSON_TYPE).headers(authorization()).put(payload);
+		String res = response.readEntity(String.class);
+		System.out.println(res);
+	}
+
 	public static MultivaluedMap<String, Object> authorization() {
+		PropertyReader.propReader();
+		String auth=PropertyReader.userName+":"+PropertyReader.password;
 		MultivaluedMap<String, Object> map = new MultivaluedHashMap<String, Object>();
-		map.add("Authorization", "Basic c29wYW5zYTpEQmtvb3BlckAwMDc=");
+		map.add("Authorization", auth);
 		return map;
 	}
 
@@ -59,7 +91,7 @@ public class ZapiRest {
 		String[] parts = excelPojo.getIssueKey().split("-");
 		String projectKey = parts[0];
 		Client client = ClientBuilder.newClient();
-		Response response = client.target("http://jira-agile.cybage.com/rest/api/2/project/" + projectKey + "/versions")
+		Response response = client.target(PropertyReader.url + "rest/api/2/project/" + projectKey + "/versions")
 				.request(MediaType.APPLICATION_JSON_TYPE).headers(authorization()).get();
 		String res = response.readEntity(String.class);
 		JSONArray jsonArray = (JSONArray) JSONSerializer.toJSON(res);
@@ -79,8 +111,8 @@ public class ZapiRest {
 
 	private static String getCycleDetails(CyclePojo cyclePojo, ExcelPojo excelPojo) {
 		Client client = ClientBuilder.newClient();
-		Response response = client.target(
-				"http://jira-agile.cybage.com/rest/zapi/latest/cycle?versionId=" + cyclePojo.getVersionID() + "")
+		Response response = client
+				.target(PropertyReader.url + "rest/zapi/latest/cycle?versionId=" + cyclePojo.getVersionID() + "")
 				.request(MediaType.APPLICATION_JSON_TYPE).headers(authorization()).get();
 		String res = response.readEntity(String.class);
 		JSONObject newJSONObj = (JSONObject) JSONSerializer.toJSON(res);
@@ -112,7 +144,7 @@ public class ZapiRest {
 		String strDate = sdfDate.format(now);
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(now);
-		cal.set(Calendar.MONTH, (cal.get(Calendar.MONTH) + 6));
+		cal.set(Calendar.MONTH, (cal.get(Calendar.MONTH) + 1));
 		Date end = cal.getTime();
 		String endDate = sdfDate.format(end);
 		String cycleName = excelPojo.getCycleName() + "_" + new Date();
@@ -123,7 +155,7 @@ public class ZapiRest {
 				+ "\",  \"versionId\": \"" + cyclePojo.getVersionID() + "\" }";
 		System.out.println("json str  " + jsonstr);
 		Entity<String> payload = Entity.json(jsonstr);
-		Response response = client.target("http://jira-agile.cybage.com/rest/zapi/latest/cycle")
+		Response response = client.target(PropertyReader.url + "rest/zapi/latest/cycle")
 				.request(MediaType.APPLICATION_JSON).headers(authorization()).post(payload);
 		System.out.println(response);
 		System.out.println("Cycle " + excelPojo.getCycleName() + "_" + new Date() + " Created successfully");
@@ -131,35 +163,38 @@ public class ZapiRest {
 
 	}
 
-	private static String getExecutionId(ExcelPojo excelPojo, String cName, CyclePojo cyclePojo) {
-		String key = excelPojo.getIssueKey();
+	private static String getExecutionId(ExcelPojo excelPojo, String cName) {
 		// http://jira-agile.cybage.com/rest/zapi/latest/execution?cycleId=5
-		String respName = null;
+		String issueId = null;
 		Client client = ClientBuilder.newClient();
-		Response response = client.target(
-				"http://jira-agile.cybage.com/rest/zapi/latest/cycle?versionId=" + cyclePojo.getVersionID() + "")
+		Response response = client.target(PropertyReader.url + "rest/api/2/issue/" + excelPojo.getIssueKey())
 				.request(MediaType.APPLICATION_JSON_TYPE).headers(authorization()).get();
 		String res = response.readEntity(String.class);
 		JSONObject newJSONObj = (JSONObject) JSONSerializer.toJSON(res);
-		ArrayList<String> cycleList = new ArrayList<String>();
-		for (int i = 0; i < newJSONObj.length(); i++) {
-			if (newJSONObj.keys().hasNext()) {
-				cycleList.add(newJSONObj.names().get(i).toString());
-			}
-			if (newJSONObj.has(cycleList.get(i))) {
-				if (cycleList.get(i).equals("recordsCount"))
-					continue;
-				JSONObject jsonObject = newJSONObj.getJSONObject(cycleList.get(i));
-				respName = jsonObject.get("name").toString();
-				if (respName.equals(cName)) {
+		issueId = newJSONObj.get("id").toString();
+		Response response2 = client.target(PropertyReader.url + "rest/zapi/latest/execution?issueId=" + issueId)
+				.request(MediaType.APPLICATION_JSON_TYPE).headers(authorization()).get();
+		String res2 = response2.readEntity(String.class);
+		JSONObject newJSONObj1 = (JSONObject) JSONSerializer.toJSON(res2);
+		String executionId = null;
+		String cycleName = null;
+		JSONArray jsonArray = null;
+		JSONObject jsonData = null;
+		for (int i = newJSONObj1.length() - 1; i >= count; i--) {
+			jsonArray = (JSONArray) JSONSerializer.toJSON(newJSONObj1.getJSONArray("executions"));
+			for (int i1 = jsonArray.length() - 1; i1 >= count; i1--) {
+				jsonData = jsonArray.getJSONObject(i1);
+				cycleName = jsonData.get("cycleName").toString();
+				if (cycleName.equals(cName)) {
+					executionId = jsonData.get("id").toString();
 					break;
 				}
-			}
-		}
-		return respName;
 
-	}
-	public static void executeTest() {
+			}
+
+		}
+
+		return executionId;
 
 	}
 

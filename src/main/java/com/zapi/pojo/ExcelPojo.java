@@ -8,6 +8,14 @@ public class ExcelPojo {
 	public String cycleName;
 	public String version;
 	public String result;
+	public int rowCount;
+	public int getRowCount() {
+		return rowCount;
+	}
+
+	private void setRowCount(int rowCount) {
+		this.rowCount = rowCount;
+	}
 
 	public String getResult() {
 		return result;
@@ -41,12 +49,13 @@ public class ExcelPojo {
 		this.version = version;
 	}
 
-	public static ExcelPojo buildExcelPojo(Row row) {
+	public static ExcelPojo buildExcelPojo(Row row, int rowCount) {
 		ExcelPojo ep = new ExcelPojo();
 		ep.setIssueKey(row.getCell(0).getStringCellValue().toString().trim());
 		ep.setCycleName(row.getCell(1).getStringCellValue().toString().trim());
 		ep.setVersion(row.getCell(2).getStringCellValue().toString().trim());
 		ep.setResult(row.getCell(3).getStringCellValue().toString().trim());
+		ep.setRowCount(rowCount);
 		return ep;
 	}
 

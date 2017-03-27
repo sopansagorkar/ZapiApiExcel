@@ -15,7 +15,7 @@ public class ReadExcel {
 	public static XSSFWorkbook workbook;
 	public static XSSFSheet sheet;
 	public static int sheetCount;
-
+	public static int rowCount;
 	public static ArrayList<ArrayList<ExcelPojo>> getExcelPojo(String path) {
 
 		ArrayList<ArrayList<ExcelPojo>> allSheetLists = new ArrayList<ArrayList<ExcelPojo>>();
@@ -30,13 +30,14 @@ public class ReadExcel {
 		sheetCount = workbook.getNumberOfSheets();
 		for (int i = 0; i < sheetCount; i++) {
 			sheet = workbook.getSheetAt(i);
+			rowCount=sheet.getLastRowNum()-1;
 			Iterator<Row> rowIterator = sheet.iterator();
 			ArrayList<ExcelPojo> singleSheetList = new ArrayList<ExcelPojo>();
 			while (rowIterator.hasNext()) {
 				Row row = (Row) rowIterator.next();
 				if (row.getRowNum() == 0)
 					continue;
-				singleSheetList.add(ExcelPojo.buildExcelPojo(row));
+				singleSheetList.add(ExcelPojo.buildExcelPojo(row,rowCount));
 
 			}
 			allSheetLists.add(singleSheetList);
