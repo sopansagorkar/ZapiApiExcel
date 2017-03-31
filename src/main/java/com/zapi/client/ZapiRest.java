@@ -70,7 +70,7 @@ public class ZapiRest {
 		default:
 			break;
 		}
-		Entity payload = Entity.json("{  \"status\":\"" + statusId + "\"}");
+		Entity<String> payload = Entity.json("{  \"status\":\"" + statusId + "\"}");
 		Client client = ClientBuilder.newClient();
 		Response response = client.target(PropertyReader.url + "rest/zapi/latest/execution/" + executionId + "/execute")
 				.request(MediaType.APPLICATION_JSON_TYPE).headers(authorization()).put(payload);
@@ -80,7 +80,7 @@ public class ZapiRest {
 
 	public static MultivaluedMap<String, Object> authorization() {
 		PropertyReader.propReader();
-		String auth=PropertyReader.userName+":"+PropertyReader.password;
+		String auth = PropertyReader.userName + ":" + PropertyReader.password;
 		MultivaluedMap<String, Object> map = new MultivaluedHashMap<String, Object>();
 		map.add("Authorization", auth);
 		return map;
@@ -164,7 +164,6 @@ public class ZapiRest {
 	}
 
 	private static String getExecutionId(ExcelPojo excelPojo, String cName) {
-		// http://jira-agile.cybage.com/rest/zapi/latest/execution?cycleId=5
 		String issueId = null;
 		Client client = ClientBuilder.newClient();
 		Response response = client.target(PropertyReader.url + "rest/api/2/issue/" + excelPojo.getIssueKey())
