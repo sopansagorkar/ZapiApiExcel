@@ -59,7 +59,7 @@ public class Listener implements ITestListener, ISuiteListener {
 		caseDataPojo.setStatus("UNEXECUTED");
 		caseDataPojo.setTestCount(testCount);
 		System.out.println("old listener");
-		ZapiRest.updateTestCases(caseDataPojo);
+		ZapiRest.updateTestCases(caseDataPojo); 
 
 	}
 
