@@ -4,18 +4,18 @@
 	<listeners>
 		<listener class-name="com.cybage.zapi.listner.Listener" />
 	</listeners>
-	<test name="test1">
+<!-- 	<test name="test1">
 		<parameter name="Version" value="Version 1.0" />
 		<parameter name="Cycle" value="Sample" />
 		<classes>
 			<class name="com.test.zapirest.ZapiRest.TestSuite" />
 		</classes>
-	</test> <!-- Test -->
+	</test> Test
 	<test name="test2">
 		<parameter name="Version" value="Ver1.1" />
 		<parameter name="Cycle" value="Functional" />
 		<classes>
 			<class name="com.test.zapirest.ZapiRest.TestSuite2" />
 		</classes>
-	</test>
+	</test> -->
 </suite> <!-- Suite -->
